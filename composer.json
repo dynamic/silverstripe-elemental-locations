@@ -9,8 +9,7 @@
     ],
     "require": {
         "dnadesign/silverstripe-elemental": "^5",
-        "silverstripe/linkfield": "^4.0",
-        "symbiote/silverstripe-addressable": "^5.0"
+        "silverstripe/linkfield": "^4.0"
     },
     "require-dev": {
         "silverstripe/recipe-testing": "^3"
