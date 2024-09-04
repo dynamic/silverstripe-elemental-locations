@@ -56,7 +56,7 @@ class Location extends DataObject
      * @var array
      */
     private static $has_many = [
-        'Links' => Link::class,
+        'Links' => Link::class . '.Owner',
     ];
 
     /**
