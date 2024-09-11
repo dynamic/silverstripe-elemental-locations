@@ -52,7 +52,7 @@ class ElementLocations extends BaseElement
         $locations = ArrayList::create();
 
         if ($this->CategoryID && $category = LocationCategory::get()->byID($this->CategoryID)) {
-            $locations = $category->Locations();
+            $locations = Location::get()->filter('Categories.ID', $category->ID);
         } else {
             $locations = Location::get();
         }
