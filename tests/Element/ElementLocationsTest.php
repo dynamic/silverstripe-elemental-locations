@@ -47,6 +47,13 @@ class ElementLocationsTest extends SapphireTest
      */
     public function testGetLocationsList(): void
     {
+        $object = $this->objFromFixture(ElementLocations::class, 'one');
+        $this->compareList(
+            DataList::create(Location::class),
+            $object->getLocationsList(),
+            'Should return all locations as not being filtered by location category'
+        );
+
         $object = $this->objFromFixture(ElementLocations::class, 'two');
         $this->compareList(
             DataList::create(Location::class)->filter('Categories.ID', $object->CategoryID),
