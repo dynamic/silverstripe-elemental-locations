@@ -2,12 +2,17 @@
 
 namespace Dynamic\Elements\Locations\Elements;
 
+use SilverStripe\ORM\ArrayList;
+use Dynamic\Locations\Model\Location;
 use SilverStripe\ORM\FieldType\DBField;
 use DNADesign\Elemental\Models\BaseElement;
+use Dynamic\Locations\Model\LocationCategory;
 
 /**
  * Class \Dynamic\Elements\Locations\Elements\ElementLocations
  *
+ * @property int $CategoryID
+ * @method LocationCategory Category()
  */
 class ElementLocations extends BaseElement
 {
@@ -21,32 +26,54 @@ class ElementLocations extends BaseElement
      * @var string
      * @config
      */
-    private static string $singular_name = 'Locations';
-
-    /**
-     * @var string
-     * @config
-     */
-    private static string $plural_name = 'Locations';
-
-    /**
-     * @var string
-     * @config
-     */
-    private static string $description = 'A locations element';
-
-    /**
-     * @var string
-     * @config
-     */
     private static string $icon = 'font-icon-globe';
+
+    /**
+     * @var array
+     * @config
+     */
+    private static array $db = [
+
+    ];
+
+    /**
+     * @var array
+     * @config
+     */
+    private static array $has_one = [
+        'Category' => LocationCategory::class,
+    ];
+
+    /**
+     * return ArrayList
+     */
+    public function getLocationsList()
+    {
+        $locations = ArrayList::create();
+
+        if ($this->CategoryID && $category = LocationCategory::get()->byID($this->CategoryID)) {
+            $locations = $category->Locations();
+        } else {
+            $locations = Location::get();
+        }
+
+        $this->extend('updateGetLocationsList', $locations);
+
+        return $locations;
+    }
 
     /**
      * @return string
      */
     public function getSummary(): string
     {
-        return DBField::create_field('HTMLText', 'Locations')->Summary(20);
+        $count = $this->getLocationsList()->count();
+        $label = _t(
+            Location::class . '.PLURALS',
+            '1 Location|{count} Locations',
+            [ 'count' => $count ]
+        );
+        return DBField::create_field('HTMLText', $label)->Summary(20);
     }
 
     /**
