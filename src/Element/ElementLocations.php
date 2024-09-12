@@ -3,16 +3,17 @@
 namespace Dynamic\Elements\Locations\Elements;
 
 use SilverStripe\ORM\ArrayList;
+use SilverStripe\Forms\FieldList;
 use Dynamic\Locations\Model\Location;
 use SilverStripe\ORM\FieldType\DBField;
 use DNADesign\Elemental\Models\BaseElement;
 use Dynamic\Locations\Model\LocationCategory;
+use SilverStripe\TagField\TagField;
 
 /**
  * Class \Dynamic\Elements\Locations\Elements\ElementLocations
  *
- * @property int $CategoryID
- * @method LocationCategory Category()
+ * @method ManyManyList|LocationCategory[] Categories()
  */
 class ElementLocations extends BaseElement
 {
@@ -40,9 +41,32 @@ class ElementLocations extends BaseElement
      * @var array
      * @config
      */
-    private static array $has_one = [
-        'Category' => LocationCategory::class,
+    private static array $many_many = [
+        'Categories' => LocationCategory::class,
     ];
+
+    /**
+     * @return FieldList
+     */
+    public function getCMSFields(): FieldList
+    {
+        $this->beforeUpdateCMSFields(function (FieldList $fields) {
+
+            $fields->removeByName('Categories');
+
+            $fields->addFieldToTab(
+                'Root.Main',
+                TagField::create(
+                    'Categories',
+                    'Categories',
+                    LocationCategory::get(),
+                    $this->Categories()
+                )
+            );
+        });
+
+        return parent::getCMSFields();
+    }
 
     /**
      * return ArrayList
@@ -51,8 +75,8 @@ class ElementLocations extends BaseElement
     {
         $locations = ArrayList::create();
 
-        if ($this->CategoryID && $category = LocationCategory::get()->byID($this->CategoryID)) {
-            $locations = Location::get()->filter('Categories.ID', $category->ID);
+        if ($this->Categories()->count()) {
+            $locations = Location::get()->filter('Categories.ID', $this->Categories()->column());
         } else {
             $locations = Location::get();
         }

@@ -17,12 +17,12 @@ Dynamic\Locations\Model\Location:
     State: "IL"
     Zip: "62701"
     Country: "US"
-    CategoryID: =>Dynamic\Locations\Model\LocationCategory.one
+    Categories: =>Dynamic\Locations\Model\LocationCategory.one
 
 Dynamic\Elements\Locations\Elements\ElementLocations:
   one:
     Title: "Locations"
   two:
     Title: "Locations 2"
-    CategoryID: =>Dynamic\Locations\Model\LocationCategory.one
+    Categories: =>Dynamic\Locations\Model\LocationCategory.one
 

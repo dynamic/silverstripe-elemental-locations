@@ -56,7 +56,7 @@ class ElementLocationsTest extends SapphireTest
 
         $object = $this->objFromFixture(ElementLocations::class, 'two');
         $this->compareList(
-            DataList::create(Location::class)->filter('Categories.ID', $object->CategoryID),
+            DataList::create(Location::class)->filter('Categories.ID', $object->Categories()->column()),
             $object->getLocationsList(),
             'Should only return locations assigned to location category'
         );
