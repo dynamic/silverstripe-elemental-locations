@@ -8,7 +8,9 @@
         "CMS"
     ],
     "require": {
-        "dnadesign/silverstripe-elemental": "^5.0"
+        "dnadesign/silverstripe-elemental": "^5.0",
+        "dynamic/silverstripe-locations": "^1.0",
+        "silverstripe/tagfield": "^3.0"
     },
     "require-dev": {
         "silverstripe/recipe-testing": "^3"

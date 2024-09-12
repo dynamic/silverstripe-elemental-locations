@@ -1,0 +1,28 @@
+Dynamic\Locations\Model\LocationCategory:
+  one:
+    Title: "Category 1"
+
+Dynamic\Locations\Model\Location:
+  one:
+    Title: "Location 1"
+    Address: "123 Fake St"
+    City: "Springfield"
+    State: "IL"
+    Zip: "62701"
+    Country: "US"
+  two:
+    Title: "Location 2"
+    Address: "456 Fake St"
+    City: "Springfield"
+    State: "IL"
+    Zip: "62701"
+    Country: "US"
+    Categories: =>Dynamic\Locations\Model\LocationCategory.one
+
+Dynamic\Elements\Locations\Elements\ElementLocations:
+  one:
+    Title: "Locations"
+  two:
+    Title: "Locations 2"
+    Categories: =>Dynamic\Locations\Model\LocationCategory.one
+
