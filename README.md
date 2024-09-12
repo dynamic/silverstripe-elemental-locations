@@ -2,9 +2,18 @@
 
 A locations block for Silverstripe. Display one or more locations on a map.
 
+![CI](https://github.com/dynamic/silverstripe-elemental-locations/workflows/CI/badge.svg)
+
+[![Latest Stable Version](https://poser.pugx.org/dynamic/silverstripe-elemental-locations/v/stable)](https://packagist.org/packages/dynamic/silverstripe-elemental-locations)
+[![Total Downloads](https://poser.pugx.org/dynamic/silverstripe-elemental-locations/downloads)](https://packagist.org/packages/dynamic/silverstripe-elemental-locations)
+[![Latest Unstable Version](https://poser.pugx.org/dynamic/silverstripe-elemental-locations/v/unstable)](https://packagist.org/packages/dynamic/silverstripe-elemental-locations)
+[![License](https://poser.pugx.org/dynamic/silverstripe-elemental-locations/license)](https://packagist.org/packages/dynamic/silverstripe-elemental-locations)
+
 ## Requirements
 
 - dnadesign/silverstripe-elemental: ^4.8
+- dynamic/silverstripe-locations ^1.0
+- silverstripe/tagfield: ^3.0
 
 ## Installation
 
@@ -15,39 +24,13 @@ composer require dynamic/silverstripe-elemental-locations
 ## License
 See [License](license.md)
 
-We have included a 3-clause BSD license you can use as a default. We advocate for the BSD license as
-it is one of the most permissive and open licenses.
+## Usage
 
-Feel free to alter the [license.md](license.md) to suit if you wan to use an alternative license.
-You can use [choosealicense.com](http://choosealicense.com) to help pick a suitable license for your project.
-
-## Documentation
- * [Documentation readme](docs/en/readme.md)
-
-Add links into your docs/<language> folder here unless your module only requires minimal documentation
-in that case, add here and remove the docs folder. You might use this as a quick table of content if you
-mhave multiple documentation pages.
-
-## Example configuration (optional)
-If your module makes use of the config API in SilverStripe it's a good idea to provide an example config
- here that will get the module working out of the box and expose the user to the possible configuration options.
-
-Provide a yaml code example where possible.
-
-```yaml
-
-Page:
-  config_option: true
-  another_config:
-    - item1
-    - item2
-
-```
+By default, this block will display all location records on a map. You can also filter the results by one or more categories.
 
 ## Maintainers
 
 *  [Dynamic](http://www.dynamicagency.com) (<dev@dynamicagency.com>)
-
 
 ## Bugtracker
 Bugs are tracked in the issues section of this repository. Before submitting an issue please read over
