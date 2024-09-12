@@ -4,11 +4,15 @@ namespace Dynamic\Elements\Locations\Elements;
 
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\Forms\FieldList;
+use SilverStripe\TagField\TagField;
+use SilverStripe\View\Requirements;
+use SilverStripe\Core\Config\Config;
 use Dynamic\Locations\Model\Location;
 use SilverStripe\ORM\FieldType\DBField;
 use DNADesign\Elemental\Models\BaseElement;
 use Dynamic\Locations\Model\LocationCategory;
-use SilverStripe\TagField\TagField;
+use Dynamic\SilverStripeGeocoder\GoogleGeocoder;
+use Dynamic\Elements\Locations\Control\ElementLocationsController;
 
 /**
  * Class \Dynamic\Elements\Locations\Elements\ElementLocations
@@ -28,6 +32,12 @@ class ElementLocations extends BaseElement
      * @config
      */
     private static string $icon = 'font-icon-globe';
+
+    /**
+     * @var string
+     * @config
+     */
+    private static $controller_class = ElementLocationsController::class;
 
     /**
      * @var array
