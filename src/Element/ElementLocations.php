@@ -17,6 +17,7 @@ use Dynamic\Elements\Locations\Control\ElementLocationsController;
 /**
  * Class \Dynamic\Elements\Locations\Elements\ElementLocations
  *
+ * @property string $MeasurementUnit
  * @method ManyManyList|LocationCategory[] Categories()
  */
 class ElementLocations extends BaseElement
@@ -44,7 +45,7 @@ class ElementLocations extends BaseElement
      * @config
      */
     private static array $db = [
-
+        'MeasurementUnit' => 'Enum("IMPERIAL, METRIC", "IMPERIAL")',
     ];
 
     /**

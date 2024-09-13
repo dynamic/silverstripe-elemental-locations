@@ -32,6 +32,9 @@ class ElementLocationsController extends ElementController
         'json',
     ];
 
+    /**
+     * @config
+     */
     protected function init()
     {
         parent::init();
@@ -60,10 +63,10 @@ class ElementLocationsController extends ElementController
     {
         $this->getResponse()->addHeader("Content-Type", "application/json");
         $data = new ArrayData([
-            //"Locations" => $this->getLocations(),
+            "Locations" => $this->getLocations(),
         ]);
 
-        return $data->renderWith('Dynamic/Elements/Locations/Data/geoJSON');
+        return $data->renderWith('Dynamic/Elements/Locations/Data/JSON');
     }
 
     /**
@@ -80,65 +83,24 @@ class ElementLocationsController extends ElementController
     public function getLocations()
     {
         if (!$this->locations) {
-            $this->setLocations($this->request);
+            $this->setLocations();
         }
 
         return $this->locations;
     }
 
     /**
-     * @param HTTPRequest|null $request
-     *
      * @return $this
      */
-    public function setLocations(HTTPRequest $request = null)
+    public function setLocations()
     {
-
-        if ($request === null) {
-            $request = $this->request;
-        }
-
-        if ($this->Categories()->exists()) {
-            foreach ($this->Categories() as $category) {
-                $filter['Categories.ID'][] = $category->ID;
-            }
-        }
-
-        $this->extend('updateLocatorFilter', $filter, $request);
-
-        $filterAny = $this->config()->get('base_filter_any');
-        $this->extend('updateLocatorFilterAny', $filterAny, $request);
-
-        $exclude = $this->config()->get('base_exclude');
-        $this->extend('updateLocatorExclude', $exclude, $request);
-
-        $class = $this->data()->ClassName;
-        $locations = $class::get_locations($filter, $filterAny, $exclude);
-        $locations = DataToArrayListHelper::to_array_list($locations);
+        $locations = $this->data()->getLocationsList();
 
         //allow for adjusting list post possible distance calculation
         $this->extend('updateLocationList', $locations);
 
         if ($locations->canSortBy('Distance')) {
             $locations = $locations->sort('Distance');
-        }
-
-        if ($this->getShowRadius()) {
-            $radiusVar = $this->data()->config()->get('radius_var');
-
-            if ($radius = (int)$request->getVar($radiusVar)) {
-                $locations = $locations->filterByCallback(function ($location) use (&$radius) {
-                    return $location->Distance <= $radius;
-                });
-            }
-        }
-
-        //allow for returning list to be set as
-        $this->extend('updateListType', $locations);
-
-        $limit = $this->getLimit();
-        if ($limit > 0) {
-            $locations = $locations->limit($limit);
         }
 
         $this->locations = $locations;
@@ -167,4 +129,5 @@ class ElementLocationsController extends ElementController
 
         return $segment;
     }
+
 }

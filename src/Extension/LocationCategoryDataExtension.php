@@ -1,8 +1,9 @@
 <?php
 
-namespace Dynamic\Elements\Locaitons\Extension;
+namespace Dynamic\Elements\Locations\Extension;
 
 use Dynamic\Elements\Locations\Elements\ElementLocations;
+use SilverStripe\Forms\FieldList;
 use SilverStripe\ORM\DataExtension;
 
 /**

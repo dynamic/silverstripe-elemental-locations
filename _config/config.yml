@@ -1,3 +1,7 @@
+Dynamic\Locations\Model\Location:
+  extensions:
+    - Dynamic\Elements\Locations\Extension\LocationDataExtension
+
 Dynamic\Locations\Model\LocationCategory:
   extensions:
-    - Dynamic\Elements\Locaitons\Extension\LocationCategoryDataExtension
+    - Dynamic\Elements\Locations\Extension\LocationCategoryDataExtension

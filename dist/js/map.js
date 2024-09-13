@@ -111,24 +111,33 @@ const mapStyle = [{
   function initMap() {
     // Create the map.
     const map = new google.maps.Map(document.getElementById('map'), {
-      zoom: 7,
-      center: {lat: 52.632469, lng: -1.689423},
+      zoom: 7, // Initial zoom, this will change based on locations
+      center: {lat: 52.632469, lng: -1.689423}, // Initial center, this will also change
       styles: mapStyle,
     });
   
+    // Create a LatLngBounds object to calculate the map's bounds
+    const bounds = new google.maps.LatLngBounds();
+  
     // Load the stores GeoJSON onto the map.
-    map.data.loadGeoJson('$link', {idPropertyName: 'storeid'});
+    map.data.loadGeoJson('$link', {idPropertyName: 'storeid'}, function(features) {
+      // Once the GeoJSON is loaded, iterate over each feature
+      features.forEach(function(feature) {
+        // Get the feature's geometry (its location)
+        const geometry = feature.getGeometry();
+  
+        // If the geometry is a point, extend the bounds to include this point
+        if (geometry.getType() === 'Point') {
+          const coordinates = geometry.get();
+          bounds.extend(coordinates); // Extend the bounds to include this location
+        }
+      });
+  
+      // Fit the map's viewport to the bounds of the locations
+      map.fitBounds(bounds);
+    });
   
     // Define the custom marker icons, using the store's "category".
-    // map.data.setStyle((feature) => {
-    //   return {
-    //     icon: {
-    //       url: `img/icon_${feature.getProperty('category')}.png`,
-    //       scaledSize: new google.maps.Size(64, 64),
-    //     },
-    //   };
-    // });
-  
     const apiKey = '$key';
     const infoWindow = new google.maps.InfoWindow();
   
@@ -137,9 +146,10 @@ const mapStyle = [{
       const category = event.feature.getProperty('category');
       const name = event.feature.getProperty('name');
       const description = event.feature.getProperty('description');
-      const hours = event.feature.getProperty('hours');
-      const phone = event.feature.getProperty('phone');
+      const hours = event.feature.getProperty('hours') || 'Hours not available';
+      const phone = event.feature.getProperty('phone') || 'Phone not available';
       const position = event.feature.getGeometry().get();
+  
       const content = sanitizeHTML`
         <img style="float:left; width:200px; margin-top:30px" src="img/logo_${category}.png">
         <div style="margin-left:220px; margin-bottom:20px;">
@@ -163,7 +173,7 @@ const mapStyle = [{
     const input = document.createElement('input');
     const options = {
       types: ['address'],
-      componentRestrictions: {country: 'gb'},
+      // componentRestrictions: {country: 'gb'},
     };
   
     card.setAttribute('id', 'pac-card');
@@ -248,36 +258,43 @@ const mapStyle = [{
     // The returned list will be in the same order as the destinations list
     const service = new google.maps.DistanceMatrixService();
     const getDistanceMatrix =
-      (service, parameters) => new Promise((resolve, reject) => {
-        service.getDistanceMatrix(parameters, (response, status) => {
-          if (status != google.maps.DistanceMatrixStatus.OK) {
-            reject(response);
+  (service, parameters) => new Promise((resolve, reject) => {
+    service.getDistanceMatrix(parameters, (response, status) => {
+      if (status != google.maps.DistanceMatrixStatus.OK) {
+        reject(response);
+      } else {
+        const distances = [];
+        const results = response.rows[0].elements;
+
+        for (let j = 0; j < results.length; j++) {
+          const element = results[j];
+          
+          // Check if distance is available before accessing it
+          if (element.distance) {
+            const distanceText = element.distance.text;
+            const distanceVal = element.distance.value;
+            const distanceObject = {
+              storeid: stores[j],
+              distanceText: distanceText,
+              distanceVal: distanceVal,
+            };
+            distances.push(distanceObject);
           } else {
-            const distances = [];
-            const results = response.rows[0].elements;
-            for (let j = 0; j < results.length; j++) {
-              const element = results[j];
-              const distanceText = element.distance.text;
-              const distanceVal = element.distance.value;
-              const distanceObject = {
-                storeid: stores[j],
-                distanceText: distanceText,
-                distanceVal: distanceVal,
-              };
-              distances.push(distanceObject);
-            }
-  
-            resolve(distances);
+            console.log(`Distance not available for store ${stores[j]}`);
           }
-        });
-      });
-  
-    const distancesList = await getDistanceMatrix(service, {
-      origins: [origin],
-      destinations: destinations,
-      travelMode: 'DRIVING',
-      unitSystem: google.maps.UnitSystem.METRIC,
+        }
+
+        resolve(distances);
+      }
     });
+  });
+  
+  const distancesList = await getDistanceMatrix(service, {
+    origins: [origin],
+    destinations: destinations,
+    travelMode: 'DRIVING',
+    unitSystem: google.maps.UnitSystem.$MeasurementUnit,
+  });
   
     distancesList.sort((first, second) => {
       return first.distanceVal - second.distanceVal;
