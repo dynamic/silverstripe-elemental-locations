@@ -295,45 +295,36 @@ const mapStyle = [{
    */
   function showStoresList(data, stores) {
     if (stores.length == 0) {
-      console.log('empty stores');
-      return;
+        console.log('No stores found');
+        return;
     }
-  
-    let panel = document.createElement('div');
-    // If the panel already exists, use it. Else, create it and add to the page.
-    if (document.getElementById('panel')) {
-      panel = document.getElementById('panel');
-      // If panel is already open, close it
-      if (panel.classList.contains('open')) {
-        panel.classList.remove('open');
-      }
-    } else {
-      panel.setAttribute('id', 'panel');
-      const body = document.body;
-      body.insertBefore(panel, body.childNodes[0]);
-    }
-  
-  
-    // Clear the previous details
+
+    // Reference the existing panel in the HTML
+    let panel = document.getElementById('panel');
+
+    // Ensure the panel is visible
+    panel.style.display = 'block';
+
+    // Clear any previous content
     while (panel.lastChild) {
-      panel.removeChild(panel.lastChild);
+        panel.removeChild(panel.lastChild);
     }
-  
+
+    // Populate the panel with the list of stores
     stores.forEach((store) => {
-      // Add store details with text formatting
-      const name = document.createElement('p');
-      name.classList.add('place');
-      const currentStore = data.getFeatureById(store.storeid);
-      name.textContent = currentStore.getProperty('name');
-      panel.appendChild(name);
-      const distanceText = document.createElement('p');
-      distanceText.classList.add('distanceText');
-      distanceText.textContent = store.distanceText;
-      panel.appendChild(distanceText);
+        const name = document.createElement('p');
+        name.classList.add('place');
+        const currentStore = data.getFeatureById(store.storeid);
+        name.textContent = currentStore.getProperty('name');
+        panel.appendChild(name);
+
+        const distanceText = document.createElement('p');
+        distanceText.classList.add('distanceText');
+        distanceText.textContent = store.distanceText;
+        panel.appendChild(distanceText);
     });
-  
-    // Open the panel
+
+    // Add 'open' class to the panel (optional for custom styling or animations)
     panel.classList.add('open');
-  
-    return;
+
   }

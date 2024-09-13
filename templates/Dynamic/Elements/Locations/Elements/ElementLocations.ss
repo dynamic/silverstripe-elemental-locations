@@ -5,10 +5,17 @@
 
 <!-- The div to hold the map -->
 <div class="row">
-    <div class="col-md-3">
-        <div id="panel" class="element__panel"></div>
+    <div class="row position-relative">
+    <!-- Panel (initially hidden) -->
+    <div id="panel" class="col-md-4 col-sm-6 position-absolute bg-light h-100" style="left: 0; z-index: 1; display: none;">
+      <!-- Panel content here -->
+      <h2>Location Search Results</h2>
     </div>
-    <div class="col-md-9">
-        <div id="map" class="element__map"></div>
+    
+    <!-- Map (full width) -->
+    <div id="map" class="col-12 position-relative">
+      <!-- Map content here -->
+      <div style="height: 500px; background-color: lightblue;">Map Area</div>
     </div>
+  </div>
 </div>
