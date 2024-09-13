@@ -47,6 +47,7 @@ class ElementLocationsController extends ElementController
             [
                 'key' => $key,
                 'link' => $link,
+                'format' => $this->data()->MeasurementUnit,
             ]
         );
 
