@@ -90,7 +90,7 @@ const mapStyle = [{
     ],
   },
   ];
-  
+
   // Escapes HTML characters in a template literal string, to prevent XSS.
   // See https://www.owasp.org/index.php/XSS_%28Cross_Site_Scripting%29_Prevention_Cheat_Sheet#RULE_.231_-_HTML_Escape_Before_Inserting_Untrusted_Data_into_HTML_Element_Content
   function sanitizeHTML(strings) {
@@ -104,134 +104,141 @@ const mapStyle = [{
     }
     return result;
   }
-  
+
   /**
    * Initialize the Google Map.
    */
   function initMap() {
-    // Create the map.
-    const map = new google.maps.Map(document.getElementById('map'), {
-      zoom: 7, // Initial zoom, this will change based on locations
-      center: {lat: 52.632469, lng: -1.689423}, // Initial center, this will also change
-      styles: mapStyle,
-    });
-  
-    // Create a LatLngBounds object to calculate the map's bounds
-    const bounds = new google.maps.LatLngBounds();
-  
-    // Load the stores GeoJSON onto the map.
-    map.data.loadGeoJson('$link', {idPropertyName: 'storeid'}, function(features) {
-      // Once the GeoJSON is loaded, iterate over each feature
-      features.forEach(function(feature) {
-        // Get the feature's geometry (its location)
-        const geometry = feature.getGeometry();
-  
-        // If the geometry is a point, extend the bounds to include this point
-        if (geometry.getType() === 'Point') {
-          const coordinates = geometry.get();
-          bounds.extend(coordinates); // Extend the bounds to include this location
-        }
+    // Select all div elements with an id that starts with 'map-'
+    const mapDivs = document.querySelectorAll('div[id^="map-"]');
+
+    mapDivs.forEach((mapDiv) => {
+      const mapId = mapDiv.id;
+      const link = mapDiv.getAttribute('data-link');
+      const key = mapDiv.getAttribute('data-key');
+
+      // Create the map.
+      const map = new google.maps.Map(mapDiv, {
+        zoom: 7, // Initial zoom, this will change based on locations
+        center: { lat: 52.632469, lng: -1.689423 }, // Initial center, this will also change
+        styles: mapStyle,
       });
-  
-      // Fit the map's viewport to the bounds of the locations
-      map.fitBounds(bounds);
-    });
-  
-    // Define the custom marker icons, using the store's "category".
-    const apiKey = '$key';
-    const infoWindow = new google.maps.InfoWindow();
-  
-    // Show the information for a store when its marker is clicked.
-    map.data.addListener('click', (event) => {
-      const category = event.feature.getProperty('category');
-      const name = event.feature.getProperty('name');
-      const description = event.feature.getProperty('description');
-      const hours = event.feature.getProperty('hours') || 'Hours not available';
-      const phone = event.feature.getProperty('phone') || 'Phone not available';
-      const position = event.feature.getGeometry().get();
-  
-      const content = sanitizeHTML`
+
+      // Create a LatLngBounds object to calculate the map's bounds
+      const bounds = new google.maps.LatLngBounds();
+
+      // Load the stores GeoJSON onto the map.
+      map.data.loadGeoJson(link, { idPropertyName: 'storeid' }, function (features) {
+        // Once the GeoJSON is loaded, iterate over each feature
+        features.forEach(function (feature) {
+          // Get the feature's geometry (its location)
+          const geometry = feature.getGeometry();
+
+          // If the geometry is a point, extend the bounds to include this point
+          if (geometry.getType() === 'Point') {
+            const coordinates = geometry.get();
+            bounds.extend(coordinates); // Extend the bounds to include this location
+          }
+        });
+
+        // Fit the map's viewport to the bounds of the locations
+        map.fitBounds(bounds);
+      });
+
+      // Define the custom marker icons, using the store's "category".
+      const infoWindow = new google.maps.InfoWindow();
+
+      // Show the information for a store when its marker is clicked.
+      map.data.addListener('click', (event) => {
+        const category = event.feature.getProperty('category');
+        const name = event.feature.getProperty('name');
+        const description = event.feature.getProperty('description');
+        const hours = event.feature.getProperty('hours') || 'Hours not available';
+        const phone = event.feature.getProperty('phone') || 'Phone not available';
+        const position = event.feature.getGeometry().get();
+
+        const content = sanitizeHTML`
         <img style="float:left; width:200px; margin-top:30px" src="img/logo_${category}.png">
         <div style="margin-left:220px; margin-bottom:20px;">
           <h2>${name}</h2><p>${description}</p>
           <p><b>Open:</b> ${hours}<br/><b>Phone:</b> ${phone}</p>
-          <p><img src="https://maps.googleapis.com/maps/api/streetview?size=350x120&location=${position.lat()},${position.lng()}&key=${apiKey}&solution_channel=GMP_codelabs_simplestorelocator_v1_a"></p>
+          <p><img src="https://maps.googleapis.com/maps/api/streetview?size=350x120&location=${position.lat()},${position.lng()}&key=${key}&solution_channel=GMP_codelabs_simplestorelocator_v1_a"></p>
         </div>
         `;
-  
-      infoWindow.setContent(content);
-      infoWindow.setPosition(position);
-      infoWindow.setOptions({pixelOffset: new google.maps.Size(0, -30)});
-      infoWindow.open(map);
-    });
-  
-    // Build and add the search bar
-    const card = document.createElement('div');
-    const titleBar = document.createElement('div');
-    const title = document.createElement('div');
-    const container = document.createElement('div');
-    const input = document.createElement('input');
-    const options = {
-      types: ['address'],
-      // componentRestrictions: {country: 'gb'},
-    };
-  
-    card.setAttribute('id', 'pac-card');
-    title.setAttribute('id', 'title');
-    title.textContent = 'Find the nearest store';
-    titleBar.appendChild(title);
-    container.setAttribute('id', 'pac-container');
-    input.setAttribute('id', 'pac-input');
-    input.setAttribute('type', 'text');
-    input.setAttribute('placeholder', 'Enter an address');
-    container.appendChild(input);
-    card.appendChild(titleBar);
-    card.appendChild(container);
-    map.controls[google.maps.ControlPosition.TOP_RIGHT].push(card);
-  
-    // Make the search bar into a Places Autocomplete search bar and select
-    // which detail fields should be returned about the place that
-    // the user selects from the suggestions.
-    const autocomplete = new google.maps.places.Autocomplete(input, options);
-  
-    autocomplete.setFields(
-        ['address_components', 'geometry', 'name']);
-  
-    // Set the origin point when the user selects an address
-    const originMarker = new google.maps.Marker({map: map});
-    originMarker.setVisible(false);
-    let originLocation = map.getCenter();
-  
-    autocomplete.addListener('place_changed', async () => {
+
+        infoWindow.setContent(content);
+        infoWindow.setPosition(position);
+        infoWindow.setOptions({ pixelOffset: new google.maps.Size(0, -30) });
+        infoWindow.open(map);
+      });
+
+      // Build and add the search bar
+      const card = document.createElement('div');
+      const titleBar = document.createElement('div');
+      const title = document.createElement('div');
+      const container = document.createElement('div');
+      const input = document.createElement('input');
+      const options = {
+        types: ['address'],
+        // componentRestrictions: {country: 'gb'},
+      };
+
+      card.setAttribute('id', 'pac-card');
+      title.setAttribute('id', 'title');
+      title.textContent = 'Find the nearest store';
+      titleBar.appendChild(title);
+      container.setAttribute('id', 'pac-container');
+      input.setAttribute('id', 'pac-input');
+      input.setAttribute('type', 'text');
+      input.setAttribute('placeholder', 'Enter an address');
+      container.appendChild(input);
+      card.appendChild(titleBar);
+      card.appendChild(container);
+      map.controls[google.maps.ControlPosition.TOP_RIGHT].push(card);
+
+      // Make the search bar into a Places Autocomplete search bar and select
+      // which detail fields should be returned about the place that
+      // the user selects from the suggestions.
+      const autocomplete = new google.maps.places.Autocomplete(input, options);
+
+      autocomplete.setFields(['address_components', 'geometry', 'name']);
+
+      // Set the origin point when the user selects an address
+      const originMarker = new google.maps.Marker({ map: map });
       originMarker.setVisible(false);
-      originLocation = map.getCenter();
-      const place = autocomplete.getPlace();
-  
-      if (!place.geometry) {
-        // User entered the name of a Place that was not suggested and
-        // pressed the Enter key, or the Place Details request failed.
-        window.alert('No address available for input: \'' + place.name + '\'');
+      let originLocation = map.getCenter();
+
+      autocomplete.addListener('place_changed', async () => {
+        originMarker.setVisible(false);
+        originLocation = map.getCenter();
+        const place = autocomplete.getPlace();
+
+        if (!place.geometry) {
+          // User entered the name of a Place that was not suggested and
+          // pressed the Enter key, or the Place Details request failed.
+          window.alert('No address available for input: \'' + place.name + '\'');
+          return;
+        }
+
+        // Recenter the map to the selected address
+        originLocation = place.geometry.location;
+        map.setCenter(originLocation);
+        map.setZoom(9);
+        console.log(place);
+
+        originMarker.setPosition(originLocation);
+        originMarker.setVisible(true);
+
+        // Use the selected address as the origin to calculate distances
+        // to each of the store locations
+        const rankedStores = await calculateDistances(map.data, originLocation);
+        showStoresList(map.data, rankedStores);
+
         return;
-      }
-  
-      // Recenter the map to the selected address
-      originLocation = place.geometry.location;
-      map.setCenter(originLocation);
-      map.setZoom(9);
-      console.log(place);
-  
-      originMarker.setPosition(originLocation);
-      originMarker.setVisible(true);
-  
-      // Use the selected address as the origin to calculate distances
-      // to each of the store locations
-      const rankedStores = await calculateDistances(map.data, originLocation);
-      showStoresList(map.data, rankedStores);
-  
-      return;
+      });
     });
   }
-  
+
   /**
    * Use Distance Matrix API to calculate distance from origin to each store.
    * @param {google.maps.Data} data The geospatial data object layer for the map
@@ -244,16 +251,16 @@ const mapStyle = [{
   async function calculateDistances(data, origin) {
     const stores = [];
     const destinations = [];
-  
+
     // Build parallel arrays for the store IDs and destinations
     data.forEach((store) => {
       const storeNum = store.getProperty('storeid');
       const storeLoc = store.getGeometry().get();
-  
+
       stores.push(storeNum);
       destinations.push(storeLoc);
     });
-  
+
     // Retrieve the distances of each store from the origin
     // The returned list will be in the same order as the destinations list
     const service = new google.maps.DistanceMatrixService();
@@ -268,7 +275,7 @@ const mapStyle = [{
 
         for (let j = 0; j < results.length; j++) {
           const element = results[j];
-          
+
           // Check if distance is available before accessing it
           if (element.distance) {
             const distanceText = element.distance.text;
@@ -288,21 +295,21 @@ const mapStyle = [{
       }
     });
   });
-  
+
   const distancesList = await getDistanceMatrix(service, {
     origins: [origin],
     destinations: destinations,
     travelMode: 'DRIVING',
     unitSystem: google.maps.UnitSystem.$MeasurementUnit,
   });
-  
+
     distancesList.sort((first, second) => {
       return first.distanceVal - second.distanceVal;
     });
-  
+
     return distancesList;
   }
-  
+
   /**
    * Build the content of the side panel from the sorted list of stores
    * and display it.

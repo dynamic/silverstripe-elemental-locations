@@ -4,6 +4,7 @@ namespace Dynamic\Elements\Locations\Control;
 
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\ArrayList;
+use SilverStripe\ORM\FieldType\DBHTMLText;
 use SilverStripe\View\ArrayData;
 use SilverStripe\Control\Director;
 use SilverStripe\View\Requirements;
@@ -30,37 +31,14 @@ class ElementLocationsController extends ElementController
      */
     private static array $allowed_actions = [
         'json',
+        'Key',
+        'JSONLink',
     ];
 
     /**
-     * @config
+     * @return DBHTMLText
      */
-    protected function init()
-    {
-        parent::init();
-
-        $key = $this->getKey();
-        $link = $this->Link('json');
-
-        Requirements::javascriptTemplate(
-            'dynamic/silverstripe-elemental-locations: dist/js/map.js',
-            [
-                'key' => $key,
-                'link' => $link,
-                'format' => $this->data()->MeasurementUnit,
-            ]
-        );
-
-        Requirements::javascript(
-            '//maps.googleapis.com/maps/api/js?key=' . $key . '&libraries=places&callback=initMap&solution_channel=GMP_codelabs_simplestorelocator_v1_a',
-            [
-                'async' => true,
-                'defer' => true,
-            ]
-        );
-    }
-
-    public function json()
+    public function json(): DBHTMLText
     {
         $this->getResponse()->addHeader("Content-Type", "application/json");
         $data = new ArrayData([
@@ -73,7 +51,15 @@ class ElementLocationsController extends ElementController
     /**
      * @return string
      */
-    public function getKey()
+    public function getMapsJSString(): string
+    {
+        return '//maps.googleapis.com/maps/api/js?key=' . $this->getKey() . '&libraries=places&callback=initMap&solution_channel=GMP_codelabs_simplestorelocator_v1_a';
+    }
+
+    /**
+     * @return string
+     */
+    public function Key(): string
     {
         return Config::inst()->get(GoogleGeocoder::class, 'map_api_key');
     }
@@ -93,7 +79,7 @@ class ElementLocationsController extends ElementController
     /**
      * @return $this
      */
-    public function setLocations()
+    public function setLocations(): self
     {
         $locations = $this->data()->getLocationsList();
 
@@ -110,6 +96,14 @@ class ElementLocationsController extends ElementController
     }
 
     /**
+     * @return string
+     */
+    public function JSONLink()
+    {
+        return $this->Link('json');
+    }
+
+    /**
      * @param string $action
      *
      * @return string
@@ -119,6 +113,10 @@ class ElementLocationsController extends ElementController
         $id = $this->element->ID;
         $segment = Controller::join_links('element', $id, $action);
         $page = Director::get_current_page();
+
+        if($page->URLSegment == 'home') {
+            return Controller::join_links('home', $segment);
+        }
 
         if ($page && !($page instanceof ElementController)) {
             return $page->Link($segment);
@@ -130,5 +128,4 @@ class ElementLocationsController extends ElementController
 
         return $segment;
     }
-
 }

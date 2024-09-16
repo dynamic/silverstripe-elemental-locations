@@ -4,6 +4,7 @@ namespace Dynamic\Elements\Locations\Elements;
 
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\Forms\FieldList;
+use SilverStripe\ORM\DataList;
 use SilverStripe\TagField\TagField;
 use SilverStripe\View\Requirements;
 use SilverStripe\Core\Config\Config;
@@ -32,7 +33,7 @@ class ElementLocations extends BaseElement
      * @var string
      * @config
      */
-    private static string $icon = 'font-icon-globe';
+    private static string $icon = 'font-icon-block-globe';
 
     /**
      * @var string
@@ -80,12 +81,10 @@ class ElementLocations extends BaseElement
     }
 
     /**
-     * return ArrayList
+     * @return DataList
      */
-    public function getLocationsList()
+    public function getLocationsList(): DataList
     {
-        $locations = ArrayList::create();
-
         if ($this->Categories()->count()) {
             $locations = Location::get()->filter('Categories.ID', $this->Categories()->column());
         } else {
@@ -106,7 +105,7 @@ class ElementLocations extends BaseElement
         $label = _t(
             Location::class . '.PLURALS',
             '1 Location|{count} Locations',
-            [ 'count' => $count ]
+            ['count' => $count]
         );
         return DBField::create_field('HTMLText', $label)->Summary(20);
     }

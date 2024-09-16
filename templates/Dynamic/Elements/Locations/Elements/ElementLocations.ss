@@ -2,6 +2,8 @@
 <% if $Content %><div class="element__content">$Content</div><% end_if %>
 
 <% require css('dynamic/silverstripe-elemental-locations: dist/css/map.css') %>
+<% require javascript('dynamic/silverstripe-elemental-locations: dist/js/map.js') %>
+<script type="text/javascript" src="$MapsJSString"></script>
 
 <!-- The div to hold the map -->
 <div class="row">
@@ -11,9 +13,9 @@
       <!-- Panel content here -->
       <h2>Location Search Results</h2>
     </div>
-    
+
     <!-- Map (full width) -->
-    <div id="map" class="col-12 position-relative">
+    <div id="map-$ID" class="col-12 position-relative" data-key="$Key" data-link="$JSONLink" data-format="$MeasurementUnit">
       <!-- Map content here -->
       <div style="height: 500px; background-color: lightblue;">Map Area</div>
     </div>
