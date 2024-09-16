@@ -11,7 +11,7 @@ A locations block for Silverstripe. Display one or more locations on a map.
 
 ## Requirements
 
-- dnadesign/silverstripe-elemental: ^4.8
+- dnadesign/silverstripe-elemental: ^5.0
 - dynamic/silverstripe-locations ^1.0
 - silverstripe/tagfield: ^3.0
 
