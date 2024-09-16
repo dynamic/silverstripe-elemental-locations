@@ -23,7 +23,6 @@ function initMap() {
     const map = new google.maps.Map(document.getElementById(mapId), {
       zoom: 7, // Initial zoom, this will change based on locations
       center: { lat: 43.7376857, lng: -87.7226079 }, // Initial center, this will also change
-      //styles: mapStyle,
     });
 
     // Create a LatLngBounds object to calculate the map's bounds
@@ -39,6 +38,11 @@ function initMap() {
         }
       });
       map.fitBounds(bounds);
+
+      map.maxDefaultZoom = 15;
+      google.maps.event.addListenerOnce(map, "bounds_changed", function () {
+        this.setZoom(Math.min(this.getZoom(), this.maxDefaultZoom));
+      });
     });
 
     // Define the custom marker icons, using the store's "category".
@@ -100,45 +104,50 @@ function initMap() {
       if (originMarker) {
         originMarker.setMap(null); // Remove the previous marker if relevant
       }
-    
+
       originLocation = map.getCenter();
       const place = autocomplete.getPlace();
-    
+
       if (!place.geometry) {
         window.alert(`No address available for input: '${place.name}'`);
         return;
       }
-    
+
       // Recenter the map to the selected address
       originLocation = place.geometry.location;
       map.setCenter(originLocation);
-    
+
       // Use the selected address as the origin to calculate distances
       const rankedStores = await calculateDistances(map.data, originLocation);
-    
+
       // Filter stores by max radius of 60 miles (96,560 meters)
       const maxRadiusMeters = 96560;
       const filteredStores = rankedStores.filter(store => store.distanceVal <= maxRadiusMeters);
-    
+
       // Show the filtered stores in the relevant panel
       showStoresList(map.data, filteredStores, panelId);
-    
+
       // Create a new LatLngBounds object to adjust the map bounds
       const bounds = new google.maps.LatLngBounds();
-    
+
       // Extend the bounds to include the user's searched location
       bounds.extend(originLocation);
-    
+
       // Extend the bounds to include each store location within the max radius
       filteredStores.forEach((store) => {
         const storeFeature = map.data.getFeatureById(store.storeid);
         const storeLocation = storeFeature.getGeometry().get();
         bounds.extend(storeLocation);
       });
-    
+
       // Adjust the map to fit all markers within the bounds
       map.fitBounds(bounds);
-    
+
+      map.maxDefaultZoom = 15;
+      google.maps.event.addListenerOnce(map, "bounds_changed", function () {
+        this.setZoom(Math.min(this.getZoom(), this.maxDefaultZoom));
+      });
+
       return;
     });
   });
