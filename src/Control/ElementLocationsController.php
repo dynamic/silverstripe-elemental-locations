@@ -9,8 +9,6 @@ use SilverStripe\Control\Director;
 use SilverStripe\View\Requirements;
 use SilverStripe\Control\Controller;
 use SilverStripe\Core\Config\Config;
-use SilverStripe\Control\HTTPRequest;
-use Dynamic\SilverStripeGeocoder\GoogleGeocoder;
 use DNADesign\Elemental\Controllers\ElementController;
 
 /**
@@ -39,18 +37,12 @@ class ElementLocationsController extends ElementController
     {
         parent::init();
 
-        $key = $this->getKey();
-        $link = $this->Link('json');
-
-        Requirements::javascriptTemplate(
-            'dynamic/silverstripe-elemental-locations: dist/js/map.js',
-            [
-                'key' => $key,
-                'link' => $link,
-                'format' => $this->data()->MeasurementUnit,
-            ]
+        Requirements::javascript(
+            'dynamic/silverstripe-elemental-locations: dist/js/map.js'
         );
 
+        $key = $this->data()->getKey();
+        
         Requirements::javascript(
             '//maps.googleapis.com/maps/api/js?key=' . $key . '&libraries=places&callback=initMap&solution_channel=GMP_codelabs_simplestorelocator_v1_a',
             [
@@ -60,6 +52,9 @@ class ElementLocationsController extends ElementController
         );
     }
 
+    /**
+     * @return string
+     */
     public function json()
     {
         $this->getResponse()->addHeader("Content-Type", "application/json");
@@ -68,14 +63,6 @@ class ElementLocationsController extends ElementController
         ]);
 
         return $data->renderWith('Dynamic/Elements/Locations/Data/JSON');
-    }
-
-    /**
-     * @return string
-     */
-    public function getKey()
-    {
-        return Config::inst()->get(GoogleGeocoder::class, 'map_api_key');
     }
 
     /**
@@ -108,27 +95,4 @@ class ElementLocationsController extends ElementController
 
         return $this;
     }
-
-    /**
-     * @param string $action
-     *
-     * @return string
-     */
-    public function Link($action = null): string
-    {
-        $id = $this->element->ID;
-        $segment = Controller::join_links('element', $id, $action);
-        $page = Director::get_current_page();
-
-        if ($page && !($page instanceof ElementController)) {
-            return $page->Link($segment);
-        }
-
-        if ($controller = $this->getParentController()) {
-            return $controller->Link($segment);
-        }
-
-        return $segment;
-    }
-
 }

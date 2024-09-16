@@ -12,7 +12,7 @@
             },
             "type": "Feature",
             "properties": {
-                <% if $Categories %>"category": "$Categories.First.Title.XML",<% end_if %>
+                <% if $Categories %>"category": "$CategoryList.XML",<% end_if %>
                 <% if $Hours %>"hours": "10am - 6pm",<% end_if %>
                 <% if $Content %>"description": "$Content.XML",<% end_if %>
                 <% if $Title %>"name": "$Title.XML",<% end_if %>

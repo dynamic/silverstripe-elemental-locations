@@ -7,13 +7,13 @@
 <div class="row">
     <div class="row position-relative">
     <!-- Panel (initially hidden) -->
-    <div id="panel" class="col-md-4 col-sm-6 position-absolute bg-light h-100" style="left: 0; z-index: 1; display: none;">
+    <div id="panel-{$ID}" class="locations-panel col-md-4 col-sm-6 position-absolute bg-light h-100" style="left: 0; z-index: 1; display: none;">
       <!-- Panel content here -->
       <h2>Location Search Results</h2>
     </div>
     
     <!-- Map (full width) -->
-    <div id="map" class="col-12 position-relative">
+    <div id="map-{$ID}" class="locations-map col-12 position-relative" data-key="$Key" data-link="$JSONLink" data-format="$MeasurementUnit" data-panel="panel-{$ID}">
       <!-- Map content here -->
       <div style="height: 500px; background-color: lightblue;">Map Area</div>
     </div>

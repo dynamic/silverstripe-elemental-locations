@@ -5,7 +5,7 @@ namespace Dynamic\Elements\Locations\Elements;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\TagField\TagField;
-use SilverStripe\View\Requirements;
+use SilverStripe\Control\Controller;
 use SilverStripe\Core\Config\Config;
 use Dynamic\Locations\Model\Location;
 use SilverStripe\ORM\FieldType\DBField;
@@ -80,6 +80,25 @@ class ElementLocations extends BaseElement
     }
 
     /**
+     * @return string
+     */
+    public function getKey()
+    {
+        return Config::inst()->get(GoogleGeocoder::class, 'map_api_key');
+    }
+
+    /**
+     * @return string
+     */
+    public function getJSONLink()
+    {
+        $controller = Controller::curr();
+        $segment = Controller::join_links('element', $this->ID, 'json');
+
+        return $controller->Link($segment);
+    }
+
+    /**
      * return ArrayList
      */
     public function getLocationsList()
@@ -98,17 +117,37 @@ class ElementLocations extends BaseElement
     }
 
     /**
+     * create a list of assigned categories
+     */
+    public function getCategoryList()
+    {
+        if ($this->Categories()->count()) {
+            return implode(', ', $this->Categories()->column('Title'));
+        }
+
+        return '';
+    }
+
+    /**
      * @return string
      */
     public function getSummary(): string
     {
-        $count = $this->getLocationsList()->count();
-        $label = _t(
-            Location::class . '.PLURALS',
-            '1 Location|{count} Locations',
-            [ 'count' => $count ]
-        );
-        return DBField::create_field('HTMLText', $label)->Summary(20);
+        $categories = $this->getCategoryList();
+        $count = $this->Categories()->count();
+        if ($count > 0) {
+            $label = _t(
+                ElementLocations::class . '.CategoriesLabel',
+                $categories
+            );
+        } else {
+            $label = _t(
+                ElementLocations::class . '.AllLocationsLabel',
+                'Showing all locations'
+            );
+        }
+        //Debug::dump($label);
+        return DBField::create_field('HTMLText', $label)->Summary(30);
     }
 
     /**
