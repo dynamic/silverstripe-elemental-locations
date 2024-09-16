@@ -34,11 +34,7 @@ class ElementLocationsTest extends SapphireTest
         $count = $object->getLocationsList()->count();
         $this->assertEquals(
             $object->getSummary(),
-            _t(
-                Location::class . 'PLURALS',
-                'A Location|{count} Locations',
-                ['count' => $count]
-            )
+            'Showing all locations'
         );
     }
 
