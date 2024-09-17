@@ -60,74 +60,74 @@ function initMap() {
       showInfoWindowForStore(storeid, map, infoWindow, key);
     });
 
-// Create and add the search bar
-const searchContainerId = mapDiv.getAttribute('data-search'); // Get the related search div ID
-const searchContainer = document.getElementById(searchContainerId);
+    // Create and add the search bar
+    const searchContainerId = mapDiv.getAttribute('data-search'); // Get the related search div ID
+    const searchContainer = document.getElementById(searchContainerId);
 
-if (searchContainer) {
-  const card = document.createElement('div');
-  const input = document.createElement('input');
-  const options = { types: ['address'] };
+    if (searchContainer) {
+      const card = document.createElement('div');
+      const input = document.createElement('input');
+      const options = { types: ['address'] };
 
-  card.setAttribute('id', 'pac-card');
-  input.setAttribute('id', 'pac-input');
-  input.setAttribute('type', 'text');
-  input.setAttribute('placeholder', 'Find a location');
-  input.classList.add('form-control');
-  card.appendChild(input);
+      card.setAttribute('id', 'pac-card');
+      input.setAttribute('id', 'pac-input');
+      input.setAttribute('type', 'text');
+      input.setAttribute('placeholder', 'Find a location');
+      input.classList.add('form-control');
+      card.appendChild(input);
 
-  // Append the search bar to the searchContainer div
-  searchContainer.appendChild(card);
+      // Append the search bar to the searchContainer div
+      searchContainer.appendChild(card);
 
-  const autocomplete = new google.maps.places.Autocomplete(input, options);
-  autocomplete.setFields(['address_components', 'geometry', 'name']);
+      const autocomplete = new google.maps.places.Autocomplete(input, options);
+      autocomplete.setFields(['address_components', 'geometry', 'name']);
 
-  const originMarker = new google.maps.Marker({ map: map });
-  originMarker.setVisible(false);
-  let originLocation = map.getCenter();
+      const originMarker = new google.maps.Marker({ map: map });
+      originMarker.setVisible(false);
+      let originLocation = map.getCenter();
 
-  // Handle place changes
-  autocomplete.addListener('place_changed', async () => {
-    if (originMarker) {
-      originMarker.setMap(null);
+      // Handle place changes
+      autocomplete.addListener('place_changed', async () => {
+        if (originMarker) {
+          originMarker.setMap(null);
+        }
+
+        originLocation = map.getCenter();
+        const place = autocomplete.getPlace();
+
+        if (!place.geometry) {
+          window.alert(`No address available for input: '${place.name}'`);
+          return;
+        }
+
+        originLocation = place.geometry.location;
+        map.setCenter(originLocation);
+
+        const rankedStores = await calculateDistances(map.data, originLocation, unit);
+        const maxRadiusMeters = 96560;
+        const filteredStores = rankedStores.filter(store => store.distanceVal <= maxRadiusMeters);
+
+        showStoresList(map.data, filteredStores, panelId, map, infoWindow, key, unit);
+
+        const bounds = new google.maps.LatLngBounds();
+        bounds.extend(originLocation);
+
+        filteredStores.forEach((store) => {
+          const storeFeature = map.data.getFeatureById(store.storeid);
+          const storeLocation = storeFeature.getGeometry().get();
+          bounds.extend(storeLocation);
+        });
+
+        map.fitBounds(bounds);
+
+        map.maxDefaultZoom = 15;
+        google.maps.event.addListenerOnce(map, "bounds_changed", function () {
+          this.setZoom(Math.min(this.getZoom(), this.maxDefaultZoom));
+        });
+      });
+    } else {
+      console.error(`Search container with ID ${searchContainerId} not found.`);
     }
-
-    originLocation = map.getCenter();
-    const place = autocomplete.getPlace();
-
-    if (!place.geometry) {
-      window.alert(`No address available for input: '${place.name}'`);
-      return;
-    }
-
-    originLocation = place.geometry.location;
-    map.setCenter(originLocation);
-
-    const rankedStores = await calculateDistances(map.data, originLocation, unit);
-    const maxRadiusMeters = 96560;
-    const filteredStores = rankedStores.filter(store => store.distanceVal <= maxRadiusMeters);
-
-    showStoresList(map.data, filteredStores, panelId, map, infoWindow, key, unit);
-
-    const bounds = new google.maps.LatLngBounds();
-    bounds.extend(originLocation);
-
-    filteredStores.forEach((store) => {
-      const storeFeature = map.data.getFeatureById(store.storeid);
-      const storeLocation = storeFeature.getGeometry().get();
-      bounds.extend(storeLocation);
-    });
-
-    map.fitBounds(bounds);
-
-    map.maxDefaultZoom = 15;
-    google.maps.event.addListenerOnce(map, "bounds_changed", function () {
-      this.setZoom(Math.min(this.getZoom(), this.maxDefaultZoom));
-    });
-  });
-} else {
-  console.error(`Search container with ID ${searchContainerId} not found.`);
-}
   });
 }
 
@@ -181,27 +181,61 @@ async function calculateDistances(data, origin, unit) {
   return distancesList;
 }
 
-// Show store info in an InfoWindow
-function showInfoWindowForStore(storeid, map, infoWindow, key) {
-  const storeFeature = map.data.getFeatureById(storeid);
-  if (!storeFeature) {
-    console.log(`Store with ID ${storeid} not found.`);
-    return;
+// Function to show the info window for a store
+function showInfoWindowForStore(storeId, map, infoWindow, key) {
+  const store = map.data.getFeatureById(storeId);
+  const storeLocation = store.getGeometry().get();
+  const storeName = decodeHTMLEntities(store.getProperty('name'));
+  let description = store.getProperty('description');
+  const category = store.getProperty('category');
+  const hours = store.getProperty('hours');
+  const phone = store.getProperty('phone');
+  const address = store.getProperty('address');
+
+  console.log('Store properties:', {
+    storeName,
+    description,
+    category,
+    hours,
+    phone
+  });
+
+  // Decode HTML entities if the properties exist
+  if (description) {
+    description = decodeHTMLEntities(description);
+    // Remove extra quotes from description
+    if (description.startsWith('"') && description.endsWith('"')) {
+      description = description.slice(1, -1);
+    }
   }
 
-  const storeLocation = storeFeature.getGeometry().get();
-  const category = storeFeature.getProperty('category');
-  const storeName = storeFeature.getProperty('name');
-  const description = storeFeature.getProperty('description') || ' ';
-  const hours = storeFeature.getProperty('hours') || 'Hours not available';
-  const phone = storeFeature.getProperty('phone') || 'Phone not available';
-
-  const content = sanitizeHTML`
+  let content = `
     <div style="margin-left:20px; margin-bottom:20px;">
-      <h2>${storeName}</h2><p>${description}</p>
-      <p><b>Category:</b> ${category}</p>
-      <p><b>Open:</b> ${hours}<br/><b>Phone:</b> ${phone}</p>
-      <p><img src="https://maps.googleapis.com/maps/api/streetview?size=350x120&location=${storeLocation.lat()},${storeLocation.lng()}&key=${key}&solution_channel=GMP_codelabs_simplestorelocator_v1_a"></p>
+      <h2>${storeName}</h2>
+  `;
+
+  if (address) {
+    content += `<p><b>Address:</b> <br>${decodeHTMLEntities(address)} <br><a href="https://www.google.com/maps/dir//${encodeURIComponent(address)}" target="_blank">Get directions</a></p>`;
+  }
+
+  if (description) {
+    content += `<p>${description}</p>`;
+  }
+
+  if (category) {
+    content += `<p><b>Category:</b> ${decodeHTMLEntities(category)}</p>`;
+  }
+
+  if (hours) {
+    content += `<p><b>Open:</b> ${decodeHTMLEntities(hours)}</p>`;
+  }
+
+  if (phone) {
+    content += `<p><b>Phone:</b> ${decodeHTMLEntities(phone)}</p>`;
+  }
+
+  content += `
+      <p><img src="https://maps.googleapis.com/maps/api/streetview?size=350x120&location=${storeLocation.lat()},${storeLocation.lng()}&key=${key}"></p>
     </div>
   `;
 
@@ -228,19 +262,19 @@ function showStoresList(data, stores, panelId, map, infoWindow, key, unit) {
 
     const listGroup = document.createElement('ul');
     listGroup.classList.add('list-group');
-    
+
     stores.forEach((store) => {
       const listItem = document.createElement('li');
       listItem.classList.add('list-group-item');
       const name = document.createElement('h5');
       name.classList.add('place');
       const currentStore = data.getFeatureById(store.storeid);
-      name.textContent = currentStore.getProperty('name');
+      name.textContent = decodeHTMLEntities(currentStore.getProperty('name'));
       listItem.appendChild(name);
-      
+
       const address = document.createElement('p');
       address.classList.add('place-address');
-      address.textContent = currentStore.getProperty('address');
+      address.textContent = decodeHTMLEntities(currentStore.getProperty('address'));
       listItem.appendChild(address);
 
       const distanceText = document.createElement('p');
@@ -259,4 +293,10 @@ function showStoresList(data, stores, panelId, map, infoWindow, key, unit) {
   } else {
     console.log(`Panel with ID ${panelId} not found`);
   }
+}
+
+function decodeHTMLEntities(encodedString) {
+  const textarea = document.createElement('textarea');
+  textarea.innerHTML = encodedString;
+  return textarea.value;
 }
