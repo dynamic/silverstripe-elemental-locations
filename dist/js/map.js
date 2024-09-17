@@ -25,6 +25,9 @@ function initMap() {
       center: { lat: 43.7376857, lng: -87.7226079 }, // Initial center, this will also change
     });
 
+    // Create the InfoWindow
+    const infoWindow = new google.maps.InfoWindow();
+
     // Create a LatLngBounds object to calculate the map's bounds
     const bounds = new google.maps.LatLngBounds();
 
@@ -43,33 +46,23 @@ function initMap() {
       google.maps.event.addListenerOnce(map, "bounds_changed", function () {
         this.setZoom(Math.min(this.getZoom(), this.maxDefaultZoom));
       });
+
+      // Display all stores in the panel as soon as the map is initialized
+      const allStores = features.map((feature) => ({
+        storeid: feature.getId(),
+        distanceText: '',  // You can update this if needed, e.g., '0 miles' for initial load
+        distanceVal: 0,    // Since distance doesn't apply here, use 0
+      }));
+
+      // Show all stores in the panel
+      showStoresList(map.data, allStores, panelId, map, infoWindow, key, unit);
     });
 
-    // Define the custom marker icons, using the store's "category".
-    const apiKey = '$key';
-    const infoWindow = new google.maps.InfoWindow();
-
+    // Listen for clicks on map markers (features) and use showInfoWindowForStore function
     map.data.addListener('click', (event) => {
-      const category = event.feature.getProperty('category');
-      const name = event.feature.getProperty('name');
-      const description = event.feature.getProperty('description') || ' ';
-      const hours = event.feature.getProperty('hours') || 'Hours not available';
-      const phone = event.feature.getProperty('phone') || 'Phone not available';
-      const position = event.feature.getGeometry().get();
-
-      const content = sanitizeHTML`
-        <div style="margin-left:20px; margin-bottom:20px;">
-          <h2>${name}</h2><p>${description}</p>
-          <p><b>Category:</b> ${category}</p>
-          <p><b>Open:</b> ${hours}<br/><b>Phone:</b> ${phone}</p>
-          <p><img src="https://maps.googleapis.com/maps/api/streetview?size=350x120&location=${position.lat()},${position.lng()}&key=${key}&solution_channel=GMP_codelabs_simplestorelocator_v1_a"></p>
-        </div>
-      `;
-
-      infoWindow.setContent(content);
-      infoWindow.setPosition(position);
-      infoWindow.setOptions({ pixelOffset: new google.maps.Size(0, -30) });
-      infoWindow.open(map);
+      const storeid = event.feature.getId();
+      // Use the reusable showInfoWindowForStore function
+      showInfoWindowForStore(storeid, map, infoWindow, key);
     });
 
     // Build and add the search bar
@@ -82,12 +75,13 @@ function initMap() {
 
     card.setAttribute('id', 'pac-card');
     title.setAttribute('id', 'title');
-    title.textContent = 'Find the nearest store';
+    title.textContent = 'Find the nearest location';
     titleBar.appendChild(title);
     container.setAttribute('id', 'pac-container');
     input.setAttribute('id', 'pac-input');
     input.setAttribute('type', 'text');
     input.setAttribute('placeholder', 'Enter an address');
+    input.classList.add('form-control');
     container.appendChild(input);
     card.appendChild(titleBar);
     card.appendChild(container);
@@ -118,14 +112,14 @@ function initMap() {
       map.setCenter(originLocation);
 
       // Use the selected address as the origin to calculate distances
-      const rankedStores = await calculateDistances(map.data, originLocation);
+      const rankedStores = await calculateDistances(map.data, originLocation, unit);
 
       // Filter stores by max radius of 60 miles (96,560 meters)
       const maxRadiusMeters = 96560;
       const filteredStores = rankedStores.filter(store => store.distanceVal <= maxRadiusMeters);
 
       // Show the filtered stores in the relevant panel
-      showStoresList(map.data, filteredStores, panelId);
+      showStoresList(map.data, filteredStores, panelId, map, infoWindow, key, unit);
 
       // Create a new LatLngBounds object to adjust the map bounds
       const bounds = new google.maps.LatLngBounds();
@@ -162,7 +156,7 @@ function initMap() {
  * a distanceText, distanceVal, and storeid property, sorted ascending
  * by distanceVal.
  */
-async function calculateDistances(data, origin) {
+async function calculateDistances(data, origin, unit) {
   const stores = [];
   const destinations = [];
 
@@ -176,7 +170,6 @@ async function calculateDistances(data, origin) {
   });
 
   // Retrieve the distances of each store from the origin
-  // The returned list will be in the same order as the destinations list
   const service = new google.maps.DistanceMatrixService();
   const getDistanceMatrix = (service, parameters) => new Promise((resolve, reject) => {
     service.getDistanceMatrix(parameters, (response, status) => {
@@ -209,11 +202,12 @@ async function calculateDistances(data, origin) {
     });
   });
 
+  // Pass the correct unit system
   const distancesList = await getDistanceMatrix(service, {
     origins: [origin],
     destinations: destinations,
     travelMode: 'DRIVING',
-    unitSystem: google.maps.UnitSystem.$unit,
+    unitSystem: unit === 'IMPERIAL' ? google.maps.UnitSystem.IMPERIAL : google.maps.UnitSystem.METRIC,
   });
 
   distancesList.sort((first, second) => {
@@ -223,8 +217,41 @@ async function calculateDistances(data, origin) {
   return distancesList;
 }
 
+function showInfoWindowForStore(storeid, map, infoWindow, key) {
+  const storeFeature = map.data.getFeatureById(storeid);
+  if (!storeFeature) {
+    console.log(`Store with ID ${storeid} not found.`);
+    return;
+  }
+
+  const storeLocation = storeFeature.getGeometry().get();
+  const category = storeFeature.getProperty('category');
+  const storeName = storeFeature.getProperty('name');
+  const description = storeFeature.getProperty('description') || ' ';
+  const hours = storeFeature.getProperty('hours') || 'Hours not available';
+  const phone = storeFeature.getProperty('phone') || 'Phone not available';
+
+  const content = sanitizeHTML`
+    <div style="margin-left:20px; margin-bottom:20px;">
+      <h2>${storeName}</h2><p>${description}</p>
+      <p><b>Category:</b> ${category}</p>
+      <p><b>Open:</b> ${hours}<br/><b>Phone:</b> ${phone}</p>
+      <p><img src="https://maps.googleapis.com/maps/api/streetview?size=350x120&location=${storeLocation.lat()},${storeLocation.lng()}&key=${key}&solution_channel=GMP_codelabs_simplestorelocator_v1_a"></p>
+    </div>
+  `;
+
+  // Do not change zoom, just center the map on the store location
+  map.setCenter(storeLocation);
+
+  // Set the content, position, and open the infoWindow
+  infoWindow.setContent(content);
+  infoWindow.setPosition(storeLocation);
+  infoWindow.setOptions({ pixelOffset: new google.maps.Size(0, -30) });
+  infoWindow.open(map);
+}
+
 // Function to show the list of stores in the specified panel
-function showStoresList(data, stores, panelId) {
+function showStoresList(data, stores, panelId, map, infoWindow, key, unit) {
   if (stores.length == 0) {
     console.log('No stores found');
     return;
@@ -233,7 +260,7 @@ function showStoresList(data, stores, panelId) {
   let panel = document.getElementById(panelId);
 
   if (panel) {
-    panel.style.display = 'block';
+    // panel.style.display = 'block'; // Ensure the panel is visible
 
     while (panel.lastChild) {
       panel.removeChild(panel.lastChild);
@@ -248,11 +275,17 @@ function showStoresList(data, stores, panelId) {
 
       const distanceText = document.createElement('p');
       distanceText.classList.add('distanceText');
-      distanceText.textContent = store.distanceText;
+      distanceText.textContent = `${store.distanceText}`;
       panel.appendChild(distanceText);
+
+      // Add event listener for when the store name is clicked
+      name.addEventListener('click', () => {
+        // Reuse the existing infoWindow functionality based on the storeid
+        showInfoWindowForStore(store.storeid, map, infoWindow, key);
+      });
     });
 
-    panel.classList.add('open');
+    //panel.classList.add('open');
   } else {
     console.log(`Panel with ID ${panelId} not found`);
   }
