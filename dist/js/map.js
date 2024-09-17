@@ -60,74 +60,74 @@ function initMap() {
       showInfoWindowForStore(storeid, map, infoWindow, key);
     });
 
-    // Create and add the search bar
-    const card = document.createElement('div');
-    const titleBar = document.createElement('div');
-    const title = document.createElement('div');
-    const container = document.createElement('div');
-    const input = document.createElement('input');
-    const options = { types: ['address'] };
+// Create and add the search bar
+const searchContainerId = mapDiv.getAttribute('data-search'); // Get the related search div ID
+const searchContainer = document.getElementById(searchContainerId);
 
-    card.setAttribute('id', 'pac-card');
-    title.setAttribute('id', 'title');
-    title.textContent = 'Find the nearest location';
-    titleBar.appendChild(title);
-    container.setAttribute('id', 'pac-container');
-    input.setAttribute('id', 'pac-input');
-    input.setAttribute('type', 'text');
-    input.setAttribute('placeholder', 'Enter an address');
-    input.classList.add('form-control');
-    container.appendChild(input);
-    card.appendChild(titleBar);
-    card.appendChild(container);
-    map.controls[google.maps.ControlPosition.TOP_RIGHT].push(card);
+if (searchContainer) {
+  const card = document.createElement('div');
+  const input = document.createElement('input');
+  const options = { types: ['address'] };
 
-    const autocomplete = new google.maps.places.Autocomplete(input, options);
-    autocomplete.setFields(['address_components', 'geometry', 'name']);
+  card.setAttribute('id', 'pac-card');
+  input.setAttribute('id', 'pac-input');
+  input.setAttribute('type', 'text');
+  input.setAttribute('placeholder', 'Find a location');
+  input.classList.add('form-control');
+  card.appendChild(input);
 
-    const originMarker = new google.maps.Marker({ map: map });
-    originMarker.setVisible(false);
-    let originLocation = map.getCenter();
+  // Append the search bar to the searchContainer div
+  searchContainer.appendChild(card);
 
-    // Handle place changes
-    autocomplete.addListener('place_changed', async () => {
-      if (originMarker) {
-        originMarker.setMap(null);
-      }
+  const autocomplete = new google.maps.places.Autocomplete(input, options);
+  autocomplete.setFields(['address_components', 'geometry', 'name']);
 
-      originLocation = map.getCenter();
-      const place = autocomplete.getPlace();
+  const originMarker = new google.maps.Marker({ map: map });
+  originMarker.setVisible(false);
+  let originLocation = map.getCenter();
 
-      if (!place.geometry) {
-        window.alert(`No address available for input: '${place.name}'`);
-        return;
-      }
+  // Handle place changes
+  autocomplete.addListener('place_changed', async () => {
+    if (originMarker) {
+      originMarker.setMap(null);
+    }
 
-      originLocation = place.geometry.location;
-      map.setCenter(originLocation);
+    originLocation = map.getCenter();
+    const place = autocomplete.getPlace();
 
-      const rankedStores = await calculateDistances(map.data, originLocation, unit);
-      const maxRadiusMeters = 96560;
-      const filteredStores = rankedStores.filter(store => store.distanceVal <= maxRadiusMeters);
+    if (!place.geometry) {
+      window.alert(`No address available for input: '${place.name}'`);
+      return;
+    }
 
-      showStoresList(map.data, filteredStores, panelId, map, infoWindow, key, unit);
+    originLocation = place.geometry.location;
+    map.setCenter(originLocation);
 
-      const bounds = new google.maps.LatLngBounds();
-      bounds.extend(originLocation);
+    const rankedStores = await calculateDistances(map.data, originLocation, unit);
+    const maxRadiusMeters = 96560;
+    const filteredStores = rankedStores.filter(store => store.distanceVal <= maxRadiusMeters);
 
-      filteredStores.forEach((store) => {
-        const storeFeature = map.data.getFeatureById(store.storeid);
-        const storeLocation = storeFeature.getGeometry().get();
-        bounds.extend(storeLocation);
-      });
+    showStoresList(map.data, filteredStores, panelId, map, infoWindow, key, unit);
 
-      map.fitBounds(bounds);
+    const bounds = new google.maps.LatLngBounds();
+    bounds.extend(originLocation);
 
-      map.maxDefaultZoom = 15;
-      google.maps.event.addListenerOnce(map, "bounds_changed", function () {
-        this.setZoom(Math.min(this.getZoom(), this.maxDefaultZoom));
-      });
+    filteredStores.forEach((store) => {
+      const storeFeature = map.data.getFeatureById(store.storeid);
+      const storeLocation = storeFeature.getGeometry().get();
+      bounds.extend(storeLocation);
     });
+
+    map.fitBounds(bounds);
+
+    map.maxDefaultZoom = 15;
+    google.maps.event.addListenerOnce(map, "bounds_changed", function () {
+      this.setZoom(Math.min(this.getZoom(), this.maxDefaultZoom));
+    });
+  });
+} else {
+  console.error(`Search container with ID ${searchContainerId} not found.`);
+}
   });
 }
 
@@ -226,22 +226,36 @@ function showStoresList(data, stores, panelId, map, infoWindow, key, unit) {
       panel.removeChild(panel.lastChild);
     }
 
+    const listGroup = document.createElement('ul');
+    listGroup.classList.add('list-group');
+    
     stores.forEach((store) => {
-      const name = document.createElement('p');
+      const listItem = document.createElement('li');
+      listItem.classList.add('list-group-item');
+      const name = document.createElement('h5');
       name.classList.add('place');
       const currentStore = data.getFeatureById(store.storeid);
       name.textContent = currentStore.getProperty('name');
-      panel.appendChild(name);
+      listItem.appendChild(name);
+      
+      const address = document.createElement('p');
+      address.classList.add('place-address');
+      address.textContent = currentStore.getProperty('address');
+      listItem.appendChild(address);
 
       const distanceText = document.createElement('p');
       distanceText.classList.add('distanceText');
       distanceText.textContent = store.distanceText;
-      panel.appendChild(distanceText);
+      listItem.appendChild(distanceText);
+
+      listGroup.appendChild(listItem);
 
       name.addEventListener('click', () => {
         showInfoWindowForStore(store.storeid, map, infoWindow, key);
       });
     });
+    panel.appendChild(listGroup);
+
   } else {
     console.log(`Panel with ID ${panelId} not found`);
   }
