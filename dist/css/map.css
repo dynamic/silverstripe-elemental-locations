@@ -6,7 +6,7 @@
 }
 
 /* Map and location columns */
-.locations-container .locations-map, 
+.locations-container .locations-map,
 .locations-container .location-col {
   flex: 1;
   max-height: 600px; /* Ensure both the map and location list don't exceed this height */
@@ -38,7 +38,6 @@
 .locations-panel {
   flex-grow: 1; /* Allow the panel to grow and take up the remaining space */
   overflow-y: auto;
-  padding: 1rem;
 }
 
 /* Style for individual places in the list */
