@@ -12,6 +12,11 @@
   overflow-y: auto;
 }
 
+.info-window {
+  margin-left: 20px;
+  margin-bottom: 20px;
+}
+
 /* Styling for Autocomplete search bar */
 #pac-input {
   text-overflow: ellipsis;

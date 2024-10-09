@@ -181,57 +181,97 @@ async function calculateDistances(data, origin, unit) {
   return distancesList;
 }
 
+function populateStoreData(store) {
+  const storeData = {
+    category: '',
+    hours: '',
+    description: '',
+    name: '',
+    phone: '',
+    email: '',
+    website: '',
+    address: '',
+    storeid: '',
+    
+  };
+
+  if (store) {
+    if (store.getProperty('category')) {
+      storeData.category = decodeHTMLEntities(store.getProperty('category'));
+    }
+    if (store.getProperty('hours')) {
+      storeData.hours = decodeHTMLEntities(store.getProperty('hours'));
+      // Remove extra quotes from hours
+      if (storeData.hours.startsWith('"') && storeData.hours.endsWith('"')) {
+        storeData.hours = storeData.hours.slice(1, -1);
+      }
+    }
+    if (store.getProperty('description')) {
+      storeData.description = decodeHTMLEntities(store.getProperty('description'));
+      // Remove extra quotes from description
+      if (storeData.description.startsWith('"') && storeData.description.endsWith('"')) {
+        storeData.description = storeData.description.slice(1, -1);
+      }
+    }
+    if (store.getProperty('name')) {
+      storeData.name = decodeHTMLEntities(store.getProperty('name'));
+    }
+    if (store.getProperty('phone')) {
+      storeData.phone = decodeHTMLEntities(store.getProperty('phone'));
+    }
+    if (store.getProperty('email')) {
+      storeData.email = decodeHTMLEntities(store.getProperty('email'));
+    }
+    if (store.getProperty('website')) {
+      storeData.website = decodeHTMLEntities(store.getProperty('website'));
+    }
+    if (store.getProperty('address')) {
+      storeData.address = decodeHTMLEntities(store.getProperty('address'));
+    }
+    if (store.getProperty('storeid')) {
+      storeData.storeid = decodeHTMLEntities(store.getProperty('storeid'));
+    }
+  } else {
+    console.log('Properties object is undefined for store:', store);
+  }
+
+  return storeData;
+}
+
 // Function to show the info window for a store
 function showInfoWindowForStore(storeId, map, infoWindow, key) {
   const store = map.data.getFeatureById(storeId);
-  const storeLocation = store.getGeometry().get();
-  const storeName = decodeHTMLEntities(store.getProperty('name'));
-  let description = store.getProperty('description');
-  const category = store.getProperty('category');
-  const hours = store.getProperty('hours');
-  const phone = store.getProperty('phone');
-  const address = store.getProperty('address');
-
-  console.log('Store properties:', {
-    storeName,
-    description,
-    category,
-    hours,
-    phone
-  });
-
-  // Decode HTML entities if the properties exist
-  if (description) {
-    description = decodeHTMLEntities(description);
-    // Remove extra quotes from description
-    if (description.startsWith('"') && description.endsWith('"')) {
-      description = description.slice(1, -1);
-    }
+  if (!store) {
+    console.log('Store not found for ID:', storeID);
+    return;
   }
+
+  const storeLocation = store.getGeometry().get();
+  const storeData = populateStoreData(store);
 
   let content = `
-    <div style="margin-left:20px; margin-bottom:20px;">
-      <h2>${storeName}</h2>
+    <div class="info-window">
+      <h4>${storeData.name}</h4>
   `;
 
-  if (address) {
-    content += `<p><b>Address:</b> <br>${decodeHTMLEntities(address)} <br><a href="https://www.google.com/maps/dir//${encodeURIComponent(address)}" target="_blank">Get directions</a></p>`;
+  if (storeData.address) {
+    content += `<p><b>Address:</b> <br>${storeData.address} <br><a href="https://www.google.com/maps/dir//${encodeURIComponent(storeData.address)}" target="_blank">Get directions</a></p>`;
   }
 
-  if (description) {
-    content += `<p>${description}</p>`;
+  if (storeData.description) {
+    content += `<p>${storeData.description}</p>`;
   }
 
-  if (category) {
-    content += `<p><b>Category:</b> ${decodeHTMLEntities(category)}</p>`;
+  if (storeData.category) {
+    content += `<p><b>Category:</b> ${storeData.category}</p>`;
   }
 
-  if (hours) {
-    content += `<p><b>Open:</b> ${decodeHTMLEntities(hours)}</p>`;
+  if (storeData.hours) {
+    content += `<p><b>Open:</b> ${storeData.hours}</p>`;
   }
 
-  if (phone) {
-    content += `<p><b>Phone:</b> ${decodeHTMLEntities(phone)}</p>`;
+  if (storeData.phone) {
+    content += `<p><b>Phone:</b> ${storeData.phone}</p>`;
   }
 
   content += `
@@ -264,27 +304,33 @@ function showStoresList(data, stores, panelId, map, infoWindow, key, unit) {
     listGroup.classList.add('list-group');
 
     stores.forEach((store) => {
+      const currentStore = data.getFeatureById(store.storeid);
+      const storeData = populateStoreData(currentStore);
+
       const listItem = document.createElement('li');
       listItem.classList.add('list-group-item');
+      
       const name = document.createElement('h5');
       name.classList.add('place');
-      const currentStore = data.getFeatureById(store.storeid);
-      name.textContent = decodeHTMLEntities(currentStore.getProperty('name'));
+      
+      name.textContent = storeData.name;
       listItem.appendChild(name);
 
       const address = document.createElement('p');
       address.classList.add('place-address');
-      address.textContent = decodeHTMLEntities(currentStore.getProperty('address'));
+      address.textContent = storeData.address;
       listItem.appendChild(address);
 
-      const distanceText = document.createElement('p');
-      distanceText.classList.add('distanceText');
-      distanceText.textContent = store.distanceText;
-      listItem.appendChild(distanceText);
+      if (store.distanceText) {
+        const distanceText = document.createElement('p');
+        distanceText.classList.add('distanceText');
+        distanceText.textContent = store.distanceText;
+        listItem.appendChild(distanceText);
+      }
 
       listGroup.appendChild(listItem);
 
-      name.addEventListener('click', () => {
+      listItem.addEventListener('click', () => {
         showInfoWindowForStore(store.storeid, map, infoWindow, key);
       });
     });

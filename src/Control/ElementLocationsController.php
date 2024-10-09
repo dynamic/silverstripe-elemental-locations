@@ -44,7 +44,7 @@ class ElementLocationsController extends ElementController
         $key = $this->data()->getKey();
 
         Requirements::javascript(
-            '//maps.googleapis.com/maps/api/js?key=' . $key . '&libraries=places&callback=initMap&solution_channel=GMP_codelabs_simplestorelocator_v1_a',
+            '//maps.googleapis.com/maps/api/js?key=' . $key . '&libraries=places&callback=initMap',
             [
                 'async' => true,
                 'defer' => true,
