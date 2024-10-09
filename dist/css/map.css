@@ -1,43 +1,71 @@
-/* Styling for the layout */
+/* Container for map and location panel */
+.locations-container {
+  display: flex;
+  flex-wrap: wrap;
+  height: 600px; /* Set fixed height for the container */
+}
+
+/* Map and location columns */
+.locations-container .locations-map,
+.locations-container .location-col {
+  flex: 1;
+  max-height: 600px; /* Ensure both the map and location list don't exceed this height */
+}
+
+/* Adjust map height */
 .locations-map {
-  height: 500px;
+  min-height: 600px;
+  height: 100%;
+  max-height: 600px; /* Prevent the map from growing too large */
 }
 
+/* Make the location column take up all available space */
 .location-col {
-  height: 500px;
-  overflow-y: scroll;
+  display: flex;
+  flex-direction: column; /* Ensure children stack vertically */
+  height: 100%;
+  max-height: 600px;
 }
 
+/* Sticky search panel with fixed height */
+.locations-search {
+  flex-shrink: 0;
+  background-color: #f8f9fa;
+  padding: 1rem;
+}
+
+/* Scrollable panel for locations */
 .locations-panel {
+  flex-grow: 1; /* Allow the panel to grow and take up the remaining space */
   overflow-y: auto;
 }
 
-.info-window {
-  margin-left: 20px;
-  margin-bottom: 20px;
-}
-
-/* Styling for Autocomplete search bar */
-#pac-input {
-  text-overflow: ellipsis;
-}
-
-#pac-input:focus {
-  border-color: #4d90fe;
-}
-
-/* Styling for the list of locations */
+/* Style for individual places in the list */
 .place {
-  margin-block-end: 0px;
+  margin-bottom: 0.5rem;
 }
 
 .place-address {
-  font-size: .75em;
-  margin-block-end: 0px;
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
 }
 
 .distanceText {
   color: #666;
-  font-size: .75em;
-  margin-block-end: 0px;
+  font-size: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.contact-directions {
+  margin-top: 10px;
+}
+
+/* Styling for the autocomplete search bar */
+#pac-input {
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+#pac-input:focus {
+  border-color: #4d90fe;
 }
