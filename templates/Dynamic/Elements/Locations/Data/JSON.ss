@@ -20,10 +20,9 @@
                 <% if $State %>"state": "$State.XML",<% end_if %>
                 <% if $PostalCode %>"postal_code": "$PostalCode.XML",<% end_if %>
                 <% if $Country %>"country": "$Country.XML",<% end_if %>
-                <% if $PhoneNumbers %>"phone": "$Phonenumbers.First.Phone.XML",<% end_if %>
-                <% if $EmailAddresses %>"email": "$EmailAddresses.First.Email.XML",<% end_if %>
+                <% if $PhoneNumbers %>"phones": [<% loop $PhoneNumbers %>{ "title": "$Title.XML", "phone": "$Phone.XML" }<% if not $IsLast %>,<% end_if %><% end_loop %>],<% end_if %>
+                <% if $EmailAddresses %>"emails": [<% loop $EmailAddresses %>{ "title": "$Title.XML", "email": "$Email.XML" }<% if not $IsLast %>,<% end_if %><% end_loop %>],<% end_if %>
                 <% if $WebsiteLinks %>"website": "$WebsiteLinks.First.URL.XML",<% end_if %>
-                <% if $Categories %>"category": "$CategoryList.XML",<% end_if %>
                 <% if $Hours %>"hours": "$Hours.JSON",<% end_if %>
                 <% if $Content %>"description": "$Content.JSON",<% end_if %>
                 "storeid": "$ID.XML"
