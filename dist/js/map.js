@@ -31,11 +31,15 @@ function stripDoubleQuotes(text) {
 
 // Populates store data from a GeoJSON feature and formats text fields
 function populateStoreData(store) {
-  const properties = ['category', 'hours', 'description', 'store_name', 'phone', 'email', 'website', 'full_address', 'address', 'address_2', 'city', 'state', 'postal_code', 'country', 'storeid'];
+  const properties = ['category', 'hours', 'description', 'store_name', 'phones', 'emails', 'website', 'full_address', 'address', 'address_2', 'city', 'state', 'postal_code', 'country', 'storeid', 'phone', 'email'];
   const storeData = {};
 
   properties.forEach(prop => {
       let value = store?.getProperty(prop);
+      if (Array.isArray(value)) {
+          storeData[prop] = value;
+          return;
+      }
       if (prop === 'hours' || prop === 'description') {
           // Apply line break formatting for hours and description, and strip quotes
           storeData[prop] = value ? stripDoubleQuotes(formatWithLineBreaks(decodeHTMLEntities(value))) : '';
@@ -86,13 +90,29 @@ function showInfoWindowForStore(storeId, map, infoWindow, key) {
       content += `<p><b>Open:</b> ${storeData.hours}</p>`;
   }
 
-  if (storeData.phone) {
-      content += `<p><b>Phone:</b> ${storeData.phone}</p>`;
+  if (storeData.emails && storeData.emails.length > 0) {
+      let emailsHtml = storeData.emails.map(e => {
+          let titleHtml = (e.title && e.title !== e.email) ? ` <span class="text-muted">${decodeHTMLEntities(e.title)}</span>` : '';
+          return `<a href="mailto:${decodeHTMLEntities(e.email)}">${decodeHTMLEntities(e.email)}</a>${titleHtml}`;
+      }).join('<br>');
+      content += `<p><b>Email:</b><br>${emailsHtml}</p>`;
+  } else if (storeData.email) {
+      content += `<p><b>Email:</b> <a href="mailto:${storeData.email}">${storeData.email}</a></p>`;
+  }
+
+  if (storeData.phones && storeData.phones.length > 0) {
+      let phonesHtml = storeData.phones.map(p => {
+          let titleHtml = (p.title && p.title !== p.phone) ? ` <span class="text-muted">${decodeHTMLEntities(p.title)}</span>` : '';
+          return `<a href="tel:${decodeHTMLEntities(p.phone)}">${decodeHTMLEntities(p.phone)}</a>${titleHtml}`;
+      }).join('<br>');
+      content += `<p><b>Phone:</b><br>${phonesHtml}</p>`;
+  } else if (storeData.phone) {
+      content += `<p><b>Phone:</b> <a href="tel:${storeData.phone}">${storeData.phone}</a></p>`;
   }
 
   // Street View image (assumed to always be present)
   content += `
-      <p><img src="https://maps.googleapis.com/maps/api/streetview?size=350x120&location=${storeLocation.lat()},${storeLocation.lng()}&key=${key}"></p>
+      <p><img src="https://maps.googleapis.com/maps/api/streetview?size=350x120&location=${storeLocation.lat()},${storeLocation.lng()}&key=${key}" onerror="this.style.display='none';"></p>
   `;
 
   // Close the content div
@@ -153,6 +173,33 @@ function showStoresList(data, stores, panelId, map, infoWindow, key, unit) {
           distanceText.classList.add('distanceText');
           distanceText.textContent = store.distanceText;
           listItem.appendChild(distanceText);
+      }
+
+      // Add emails and phones
+      if (storeData.emails && storeData.emails.length > 0) {
+          const emailsWrap = createElement('p', 'contact-emails', '');
+          emailsWrap.innerHTML = storeData.emails.map(e => {
+              let titleHtml = (e.title && e.title !== e.email) ? ` <span class="text-muted">${decodeHTMLEntities(e.title)}</span>` : '';
+              return `<a href="mailto:${decodeHTMLEntities(e.email)}">${decodeHTMLEntities(e.email)}</a>${titleHtml}`;
+          }).join('<br>');
+          listItem.appendChild(emailsWrap);
+      } else if (storeData.email) {
+          const emailsWrap = createElement('p', 'contact-email', '');
+          emailsWrap.innerHTML = `<a href="mailto:${storeData.email}">${storeData.email}</a>`;
+          listItem.appendChild(emailsWrap);
+      }
+
+      if (storeData.phones && storeData.phones.length > 0) {
+          const phonesWrap = createElement('p', 'contact-phones', '');
+          phonesWrap.innerHTML = storeData.phones.map(p => {
+              let titleHtml = (p.title && p.title !== p.phone) ? ` <span class="text-muted">${decodeHTMLEntities(p.title)}</span>` : '';
+              return `<a href="tel:${decodeHTMLEntities(p.phone)}">${decodeHTMLEntities(p.phone)}</a>${titleHtml}`;
+          }).join('<br>');
+          listItem.appendChild(phonesWrap);
+      } else if (storeData.phone) {
+           const phonesWrap = createElement('p', 'contact-phone', '');
+          phonesWrap.innerHTML = `<a href="tel:${storeData.phone}">${storeData.phone}</a>`;
+          listItem.appendChild(phonesWrap);
       }
 
       // Directions button in a <p> tag
